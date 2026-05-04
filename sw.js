@@ -1,4 +1,4 @@
-const CACHE_NAME = 'readium-v1';
+const CACHE_NAME = 'readium-v2';
 const STATIC_ASSETS = [
   './', './index.html', './index.css', './manifest.json',
   './js/app.js', './js/db.js', './js/library.js', './js/reader.js',
