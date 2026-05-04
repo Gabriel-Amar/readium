@@ -366,6 +366,7 @@ body {
   border-bottom: 1px solid var(--glass-border);
   flex-shrink: 0;
   z-index: var(--z-header);
+  transition: transform 250ms ease, opacity 250ms ease;
 }
 
 .reader-title {
@@ -447,6 +448,7 @@ body {
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--glass-border);
   flex-shrink: 0;
+  transition: transform 250ms ease, opacity 250ms ease;
 }
 
 .reader-page-info {

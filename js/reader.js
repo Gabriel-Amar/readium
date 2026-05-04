@@ -22,6 +22,7 @@ let isScrollMode = false;
 let scrollObserver = null;
 let scrollContainer = null;
 let scrollUpdateTimer = null;
+let immersive = false;
 
 // DOM elements
 const readerView = document.getElementById('reader-view');
@@ -69,6 +70,13 @@ export function init(pdfjs, closeCallback) {
   const area = document.getElementById('reader-canvas-area');
   area.addEventListener('touchstart', onTouchStart, { passive: true });
   area.addEventListener('touchend', onTouchEnd, { passive: false });
+
+  // Tap to toggle immersive mode (hide/show header + footer)
+  area.addEventListener('click', (e) => {
+    // Don't toggle if clicking a button
+    if (e.target.closest('.nav-btn') || e.target.closest('.btn')) return;
+    toggleImmersive();
+  });
 
 }
 
@@ -362,6 +370,26 @@ function updateUI() {
 }
 
 /**
+ * Toggle immersive mode — hide/show reader header and footer for full-screen reading.
+ */
+function toggleImmersive() {
+  immersive = !immersive;
+  const header = document.querySelector('.reader-header');
+  const footer = document.querySelector('.reader-footer');
+  if (immersive) {
+    header.style.transform = 'translateY(-100%)';
+    header.style.opacity = '0';
+    footer.style.transform = 'translateY(100%)';
+    footer.style.opacity = '0';
+  } else {
+    header.style.transform = '';
+    header.style.opacity = '';
+    footer.style.transform = '';
+    footer.style.opacity = '';
+  }
+}
+
+/**
  * Close the reader and return to library.
  */
 function closeReader() {
@@ -371,6 +399,9 @@ function closeReader() {
   } else if (currentBook) {
     updateBookProgress(currentBook.id, currentPage, null);
   }
+
+  // Reset immersive mode
+  if (immersive) toggleImmersive();
 
   // Clean up scroll mode if active
   if (isScrollMode) cleanupScrollMode();
