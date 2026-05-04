@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Readium — A premium offline PDF & eBook reader with library management, reading progress tracking, and AMOLED dark mode.">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>Readium — PDF Reader</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-512.png">
+  <link rel="stylesheet" href="index.css">
+  <script>
+    // Anti-FOUC: apply saved theme before first paint
+    (function(){
+      try {
+        var t = localStorage.getItem('readium-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+        if (localStorage.getItem('readium-invert-pdf') === 'true') {
+          document.documentElement.setAttribute('data-invert-pdf', 'true');
+        }
+      } catch(e){}
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="app-header" id="app-header">
+    <a href="#" class="logo" id="logo-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+      <span>Readium</span>
+    </a>
+    <div class="header-actions">
+      <button class="btn btn-primary" id="import-btn" title="Import PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Import
+      </button>
+      <button class="btn btn-ghost" id="settings-btn" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== LIBRARY VIEW ===== -->
+  <main id="library-view">
+    <div class="library-header">
+      <div>
+        <h2>Your Library</h2>
+        <span class="library-stats" id="library-stats"></span>
+      </div>
+      <button class="btn btn-primary" id="import-btn-2" title="Import PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add Book
+      </button>
+    </div>
+    <div class="book-grid" id="book-grid"></div>
+  </main>
+
+  <!-- ===== READER VIEW ===== -->
+  <section id="reader-view">
+    <div class="reader-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-ghost" id="reader-back" title="Back to Library">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <button class="btn btn-ghost" id="toc-btn" title="Table of Contents">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <span class="reader-title" id="reader-title"></span>
+      </div>
+      <button class="btn btn-ghost" id="reader-settings-btn" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+    </div>
+    <div class="reader-canvas-area" id="reader-canvas-area">
+      <div class="loading-overlay" id="reader-loading">
+        <div class="spinner"></div>
+      </div>
+      <button class="nav-btn prev" id="prev-btn" title="Previous Page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <div class="page-container" id="page-container">
+        <canvas id="pdf-canvas"></canvas>
+      </div>
+      <button class="nav-btn next" id="next-btn" title="Next Page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+    </div>
+    <div class="reader-footer">
+      <span class="reader-page-info" id="reader-page-info"></span>
+      <span class="reader-footer-dot">·</span>
+      <span class="reader-progress-text" id="reader-progress-text">0%</span>
+      <span class="reader-time-remaining" id="reader-time-remaining"></span>
+    </div>
+  </section>
+
+  <!-- ===== TOC SIDEBAR ===== -->
+  <div class="toc-overlay" id="toc-overlay"></div>
+  <nav class="toc-panel" id="toc-panel">
+    <div class="toc-header">
+      <h3>Table of Contents</h3>
+      <button class="btn btn-ghost" id="toc-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <ul class="toc-list" id="toc-list"></ul>
+  </nav>
+
+  <!-- ===== SETTINGS MODAL ===== -->
+  <div class="settings-overlay" id="settings-overlay"></div>
+  <div class="settings-panel" id="settings-panel">
+    <div class="settings-header">
+      <h3>Settings</h3>
+      <button class="btn btn-ghost" id="settings-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">Appearance</div>
+      <div class="setting-row">
+        <span class="setting-label">AMOLED Dark Mode</span>
+        <button class="toggle active" id="theme-toggle" role="switch" aria-checked="true"></button>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Invert PDF Colors</span>
+        <button class="toggle" id="invert-toggle" role="switch" aria-checked="false"></button>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">Page Transition</div>
+      <div class="radio-group" id="transition-group">
+        <button class="radio-option active" data-value="slide">Slide</button>
+        <button class="radio-option" data-value="fade">Fade</button>
+        <button class="radio-option" data-value="curl">Page Curl</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HIDDEN FILE INPUT ===== -->
+  <input type="file" id="file-input" accept=".pdf" multiple>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

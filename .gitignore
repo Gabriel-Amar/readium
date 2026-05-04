@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# PDF files (user content, not part of the app)
+*.pdf
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
