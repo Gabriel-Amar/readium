@@ -101,8 +101,8 @@ export async function openBook(book) {
     // Init TOC sidebar
     await initToc(pdfDoc, (page) => jumpToPage(page));
 
-    // Choose rendering mode based on viewport width
-    isScrollMode = window.matchMedia('(max-width: 768px)').matches;
+    // Choose rendering mode based on user preference
+    isScrollMode = settings.readingMode === 'scroll';
 
     if (isScrollMode) {
       await initScrollMode();

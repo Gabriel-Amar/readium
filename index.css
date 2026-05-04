@@ -751,40 +751,43 @@ body {
   #library-view { padding: 80px 16px 32px; }
   .library-header { flex-direction: column; align-items: flex-start; gap: 8px; }
 
-  /* Hide nav arrows on mobile — scroll mode replaces them */
-  .nav-btn { display: none !important; }
+  /* On mobile, show nav arrows at reduced opacity (page mode) */
+  .nav-btn { opacity: .5; width: 36px; height: 60px; }
+}
 
-  /* Scroll mode: vertical continuous scrolling */
-  .reader-canvas-area.scroll-mode {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    align-items: flex-start;
-    justify-content: flex-start;
-  }
+/* ==================== SCROLL MODE (any screen size) ==================== */
+/* Hide nav arrows in scroll mode */
+.reader-canvas-area.scroll-mode .nav-btn { display: none !important; }
 
-  .scroll-pages-container {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
+.reader-canvas-area.scroll-mode {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
 
-  .scroll-page {
-    width: 100%;
-    background: var(--bg-surface);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100px;
-  }
+.scroll-pages-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 
-  .scroll-page canvas {
-    width: 100%;
-    height: auto;
-    display: block;
-    filter: var(--canvas-filter);
-    transition: filter var(--transition-normal);
-  }
+.scroll-page {
+  width: 100%;
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+}
+
+.scroll-page canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: var(--canvas-filter);
+  transition: filter var(--transition-normal);
 }
 
 @media (max-width: 480px) {

@@ -6,6 +6,7 @@ const KEYS = {
   theme: 'readium-theme',
   transition: 'readium-transition',
   invertPdf: 'readium-invert-pdf',
+  readingMode: 'readium-reading-mode',
 };
 
 /** Load a setting with a default fallback */
@@ -22,6 +23,7 @@ export const state = {
   theme: load(KEYS.theme, 'dark'),
   transition: load(KEYS.transition, 'slide'),
   invertPdf: load(KEYS.invertPdf, 'false') === 'true',
+  readingMode: load(KEYS.readingMode, 'page'),
 };
 
 /** Apply theme to the document */
@@ -61,6 +63,14 @@ export function init() {
     btn.classList.toggle('active', btn.dataset.value === state.transition);
   });
 
+  // Sync reading mode radio
+  const readingModeGroup = document.getElementById('reading-mode-group');
+  if (readingModeGroup) {
+    readingModeGroup.querySelectorAll('.radio-option').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.value === state.readingMode);
+    });
+  }
+
   // Theme toggle
   themeToggle.addEventListener('click', () => {
     state.theme = state.theme === 'dark' ? 'light' : 'dark';
@@ -85,6 +95,17 @@ export function init() {
     save(KEYS.transition, state.transition);
     transitionGroup.querySelectorAll('.radio-option').forEach((b) => b.classList.toggle('active', b === btn));
   });
+
+  // Reading mode radio
+  if (readingModeGroup) {
+    readingModeGroup.addEventListener('click', (e) => {
+      const btn = e.target.closest('.radio-option');
+      if (!btn) return;
+      state.readingMode = btn.dataset.value;
+      save(KEYS.readingMode, state.readingMode);
+      readingModeGroup.querySelectorAll('.radio-option').forEach((b) => b.classList.toggle('active', b === btn));
+    });
+  }
 
   // Open/close settings
   function openSettings() {
