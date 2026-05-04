@@ -751,8 +751,8 @@ body {
   #library-view { padding: 80px 16px 32px; }
   .library-header { flex-direction: column; align-items: flex-start; gap: 8px; }
 
-  /* On mobile, always show nav arrows (no hover needed on touch) */
-  .nav-btn { opacity: .7 !important; width: 36px; height: 60px; }
+  /* No arrows on mobile — swipe to navigate */
+  .nav-btn { display: none !important; }
 }
 
 /* ==================== SCROLL MODE (any screen size) ==================== */
