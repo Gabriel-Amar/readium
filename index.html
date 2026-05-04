@@ -170,8 +170,18 @@
       <div class="radio-group" id="reading-mode-group">
         <button class="radio-option active" data-value="page">📖 Page</button>
         <button class="radio-option" data-value="scroll">📜 Scroll</button>
+        <button class="radio-option" data-value="reflow">Aa Reflow</button>
       </div>
-      <p style="font-size:.72rem;color:var(--text-muted);margin-top:8px">Page mode turns pages one at a time. Scroll mode shows all pages in a continuous vertical scroll. Re-open the book to apply.</p>
+      <p style="font-size:.72rem;color:var(--text-muted);margin-top:8px">Reflow extracts text from the PDF and displays it as readable, resizable text. Best for text-heavy books. Re-open the book to apply.</p>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">Font Size (Reflow)</div>
+      <div class="setting-row">
+        <span class="setting-label" style="font-size:.8rem">A</span>
+        <input type="range" id="font-size-slider" min="14" max="36" value="18" step="1" style="flex:1;margin:0 12px;accent-color:var(--accent)">
+        <span class="setting-label" style="font-size:1.2rem;font-weight:700">A</span>
+      </div>
+      <div style="text-align:center;font-size:.75rem;color:var(--text-muted);margin-top:4px" id="font-size-label">18px</div>
     </div>
   </div>
 

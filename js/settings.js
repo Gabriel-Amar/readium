@@ -7,6 +7,7 @@ const KEYS = {
   transition: 'readium-transition',
   invertPdf: 'readium-invert-pdf',
   readingMode: 'readium-reading-mode',
+  fontSize: 'readium-font-size',
 };
 
 /** Load a setting with a default fallback */
@@ -24,6 +25,7 @@ export const state = {
   transition: load(KEYS.transition, 'slide'),
   invertPdf: load(KEYS.invertPdf, 'false') === 'true',
   readingMode: load(KEYS.readingMode, 'page'),
+  fontSize: parseInt(load(KEYS.fontSize, '18'), 10),
 };
 
 /** Apply theme to the document */
@@ -104,6 +106,22 @@ export function init() {
       state.readingMode = btn.dataset.value;
       save(KEYS.readingMode, state.readingMode);
       readingModeGroup.querySelectorAll('.radio-option').forEach((b) => b.classList.toggle('active', b === btn));
+    });
+  }
+
+  // Font size slider
+  const fontSlider = document.getElementById('font-size-slider');
+  const fontLabel = document.getElementById('font-size-label');
+  if (fontSlider) {
+    fontSlider.value = state.fontSize;
+    fontLabel.textContent = `${state.fontSize}px`;
+    fontSlider.addEventListener('input', () => {
+      state.fontSize = parseInt(fontSlider.value, 10);
+      fontLabel.textContent = `${state.fontSize}px`;
+      save(KEYS.fontSize, String(state.fontSize));
+      // Live-update reflow container if it exists
+      const reflowEl = document.querySelector('.reflow-container');
+      if (reflowEl) reflowEl.style.fontSize = `${state.fontSize}px`;
     });
   }
 

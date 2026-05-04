@@ -792,6 +792,39 @@ body {
   transition: filter var(--transition-normal);
 }
 
+/* ==================== REFLOW MODE ==================== */
+.reflow-container {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-family: 'Inter', Georgia, serif;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.reflow-container p {
+  margin-bottom: 1em;
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+.reflow-page {
+  margin-bottom: 8px;
+}
+
+.reflow-page-sep {
+  text-align: center;
+  font-size: .7rem;
+  color: var(--text-muted);
+  padding: 12px 0 16px;
+  letter-spacing: .1em;
+  opacity: .5;
+}
+
 @media (max-width: 480px) {
   .book-grid {
     grid-template-columns: repeat(2, 1fr);

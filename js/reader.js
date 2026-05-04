@@ -19,6 +19,7 @@ let onClose = null;
 
 // Mobile scroll mode state
 let isScrollMode = false;
+let isReflowMode = false;
 let scrollObserver = null;
 let scrollContainer = null;
 let scrollUpdateTimer = null;
@@ -111,8 +112,11 @@ export async function openBook(book) {
 
     // Choose rendering mode based on user preference
     isScrollMode = settings.readingMode === 'scroll';
+    isReflowMode = settings.readingMode === 'reflow';
 
-    if (isScrollMode) {
+    if (isReflowMode) {
+      await initReflowMode();
+    } else if (isScrollMode) {
       await initScrollMode();
     } else {
       await renderPage(currentPage);
@@ -297,11 +301,158 @@ function cleanupScrollMode() {
   isScrollMode = false;
 }
 
+// ==================== REFLOW TEXT MODE ====================
+
+/**
+ * Initialize reflow mode — extract text from all PDF pages and
+ * display as resizable HTML text in a scrollable container.
+ */
+async function initReflowMode() {
+  const area = document.getElementById('reader-canvas-area');
+  area.classList.add('scroll-mode'); // reuse scroll layout
+
+  pageContainer.style.display = 'none';
+
+  scrollContainer = document.createElement('div');
+  scrollContainer.className = 'reflow-container';
+  scrollContainer.style.fontSize = `${settings.fontSize}px`;
+
+  // Extract text from every page
+  for (let i = 1; i <= totalPages; i++) {
+    const section = document.createElement('section');
+    section.className = 'reflow-page';
+    section.dataset.pageNum = String(i);
+
+    try {
+      const page = await pdfDoc.getPage(i);
+      const textContent = await page.getTextContent();
+      const html = textItemsToHTML(textContent.items);
+      section.innerHTML = html;
+    } catch (err) {
+      section.innerHTML = `<p style="color:var(--text-muted)">Could not extract text from page ${i}</p>`;
+    }
+
+    // Page separator
+    const sep = document.createElement('div');
+    sep.className = 'reflow-page-sep';
+    sep.textContent = `— ${i} —`;
+    section.prepend(sep);
+
+    scrollContainer.appendChild(section);
+  }
+
+  area.appendChild(scrollContainer);
+
+  // Track current page via IntersectionObserver
+  scrollObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+        const num = parseInt(entry.target.dataset.pageNum);
+        if (num !== currentPage) {
+          const ppm = leavePage(currentPage);
+          if (ppm !== null) updateBookProgress(currentBook.id, currentPage, ppm);
+          currentPage = num;
+          enterPage(currentPage);
+          updateBookProgress(currentBook.id, currentPage, null);
+          getBook(currentBook.id).then((b) => { if (b) currentBook = b; });
+          updateUI();
+        }
+      }
+    }
+  }, { root: area, rootMargin: '0px', threshold: 0.3 });
+
+  scrollContainer.querySelectorAll('.reflow-page').forEach((el) => scrollObserver.observe(el));
+
+  // Scroll to last-read page
+  if (currentPage > 1) {
+    const target = scrollContainer.children[currentPage - 1];
+    if (target) requestAnimationFrame(() => target.scrollIntoView({ behavior: 'instant' }));
+  }
+
+  updateUI();
+}
+
+/**
+ * Convert PDF.js text items into readable HTML paragraphs.
+ * Groups items by Y-position into lines, detects paragraph breaks.
+ */
+function textItemsToHTML(items) {
+  if (!items || items.length === 0) return '<p></p>';
+
+  // Group items into lines by Y-position (transform[5])
+  const lines = [];
+  let currentLine = { y: null, text: '' };
+
+  for (const item of items) {
+    if (!item.str || item.str.trim() === '') {
+      if (currentLine.text) currentLine.text += ' ';
+      continue;
+    }
+
+    const y = Math.round(item.transform[5]); // Y-coordinate
+
+    if (currentLine.y === null || Math.abs(y - currentLine.y) < 3) {
+      // Same line
+      currentLine.y = y;
+      currentLine.text += (currentLine.text && !currentLine.text.endsWith(' ') ? ' ' : '') + item.str;
+    } else {
+      // New line
+      if (currentLine.text.trim()) lines.push(currentLine);
+      currentLine = { y, text: item.str };
+    }
+  }
+  if (currentLine.text.trim()) lines.push(currentLine);
+
+  if (lines.length === 0) return '<p></p>';
+
+  // Group lines into paragraphs (large Y-gap = new paragraph)
+  const paragraphs = [];
+  let currentParagraph = lines[0].text;
+
+  for (let i = 1; i < lines.length; i++) {
+    const gap = Math.abs(lines[i - 1].y - lines[i].y);
+    const avgLineHeight = 14; // approximate
+    if (gap > avgLineHeight * 1.8) {
+      // Paragraph break
+      paragraphs.push(currentParagraph);
+      currentParagraph = lines[i].text;
+    } else {
+      // Continue paragraph — add space if previous line doesn't end with hyphen
+      if (currentParagraph.endsWith('-')) {
+        currentParagraph = currentParagraph.slice(0, -1) + lines[i].text;
+      } else {
+        currentParagraph += ' ' + lines[i].text;
+      }
+    }
+  }
+  paragraphs.push(currentParagraph);
+
+  return paragraphs.map((p) => `<p>${escapeHTML(p)}</p>`).join('\n');
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * Clean up reflow mode.
+ */
+function cleanupReflowMode() {
+  const area = document.getElementById('reader-canvas-area');
+  area.classList.remove('scroll-mode');
+
+  if (scrollObserver) { scrollObserver.disconnect(); scrollObserver = null; }
+  if (scrollContainer) { scrollContainer.remove(); scrollContainer = null; }
+
+  pageContainer.style.display = '';
+  isReflowMode = false;
+}
+
 /**
  * Navigate to next or previous page with transition.
  */
 async function goPage(direction) {
-  if (rendering || isScrollMode) return; // scroll mode uses native scroll
+  if (rendering || isScrollMode || isReflowMode) return;
   const targetPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
   if (targetPage < 1 || targetPage > totalPages) return;
 
@@ -333,8 +484,8 @@ async function goPage(direction) {
 async function jumpToPage(pageNum) {
   if (pageNum < 1 || pageNum > totalPages) return;
 
-  // In scroll mode, just scroll to the target page element
-  if (isScrollMode && scrollContainer) {
+  // In scroll/reflow mode, just scroll to the target page element
+  if ((isScrollMode || isReflowMode) && scrollContainer) {
     const target = scrollContainer.children[pageNum - 1];
     if (target) target.scrollIntoView({ behavior: 'smooth' });
     return;
@@ -417,8 +568,9 @@ function closeReader() {
   // Reset immersive mode
   if (immersive) toggleImmersive();
 
-  // Clean up scroll mode if active
+  // Clean up scroll/reflow mode if active
   if (isScrollMode) cleanupScrollMode();
+  if (isReflowMode) cleanupReflowMode();
 
   readerView.classList.remove('active');
   // Restore the main app header and library view
@@ -441,7 +593,7 @@ function onTouchStart(e) {
 }
 
 function onTouchEnd(e) {
-  if (isScrollMode) return; // scroll mode uses native scroll
+  if (isScrollMode || isReflowMode) return;
   if (e.changedTouches.length !== 1) return;
   const dx = e.changedTouches[0].clientX - touchStartX;
   const dy = e.changedTouches[0].clientY - touchStartY;
