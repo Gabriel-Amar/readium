@@ -370,7 +370,9 @@ function updateUI() {
 }
 
 /**
- * Toggle immersive mode — hide/show reader header and footer for full-screen reading.
+ * Toggle immersive mode — hide/show reader header and footer.
+ * When immersive, the header/footer collapse to zero height so the
+ * canvas area gets the full viewport, and the page re-renders larger.
  */
 function toggleImmersive() {
   immersive = !immersive;
@@ -379,13 +381,25 @@ function toggleImmersive() {
   if (immersive) {
     header.style.transform = 'translateY(-100%)';
     header.style.opacity = '0';
+    header.style.position = 'absolute';
+    header.style.pointerEvents = 'none';
     footer.style.transform = 'translateY(100%)';
     footer.style.opacity = '0';
+    footer.style.position = 'absolute';
+    footer.style.pointerEvents = 'none';
   } else {
     header.style.transform = '';
     header.style.opacity = '';
+    header.style.position = '';
+    header.style.pointerEvents = '';
     footer.style.transform = '';
     footer.style.opacity = '';
+    footer.style.position = '';
+    footer.style.pointerEvents = '';
+  }
+  // Re-render the page at the new available size (after layout reflow)
+  if (!isScrollMode && pdfDoc) {
+    setTimeout(() => renderPage(currentPage), 260);
   }
 }
 
