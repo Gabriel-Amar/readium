@@ -137,9 +137,15 @@ async function renderPage(pageNum) {
   const scaleH = areaH / unscaledViewport.height;
   const scale = Math.min(scaleW, scaleH, 3); // cap at 3x
 
-  const viewport = page.getViewport({ scale });
+  // Render at native device resolution for sharp text on high-DPI screens
+  const dpr = window.devicePixelRatio || 1;
+  const viewport = page.getViewport({ scale: scale * dpr });
   canvas.width = viewport.width;
   canvas.height = viewport.height;
+
+  // Scale canvas back down to CSS pixels so it fits the layout
+  canvas.style.width = `${Math.floor(viewport.width / dpr)}px`;
+  canvas.style.height = `${Math.floor(viewport.height / dpr)}px`;
 
   await page.render({ canvasContext: ctx, viewport }).promise;
   updateUI();
